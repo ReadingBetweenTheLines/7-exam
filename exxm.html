@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ujian Penilaian Tengah Semester - Coding & Informatika</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    pre, code, textarea.code-font {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Header Banner -->
+    <header class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-sky-400">Lembar Ujian Coding & Informatika</h1>
+        <p class="text-sm text-slate-400 mt-1">15 Soal Esai • Angka Biner, Pola Angka, Pola Grid & Kriptografi Sandi</p>
+      </div>
+      <div id="save-status" class="inline-flex items-center gap-2 self-start sm:self-auto px-3.5 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        Semua jawaban tersimpan lokal
+      </div>
+    </header>
+
+    <!-- Student Info Card -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+      <h2 class="text-base font-semibold text-slate-200 uppercase tracking-wider text-xs">Identitas Peserta</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="fullName" class="block text-xs font-medium text-slate-400 mb-1">Nama Lengkap *</label>
+          <input type="text" id="fullName" placeholder="Masukkan nama lengkap..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition" />
+        </div>
+        <div>
+          <label for="className" class="block text-xs font-medium text-slate-400 mb-1">Kelas / Rombel *</label>
+          <input type="text" id="className" placeholder="Contoh: VII-A" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Questions Form -->
+    <form id="examForm" class="space-y-6">
+      <div id="questions-list" class="space-y-6"></div>
+
+      <!-- Action Panel -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <button type="button" id="resetBtn" class="text-xs text-rose-400 hover:text-rose-300 underline underline-offset-4">
+          Kosongkan Semua Jawaban & Reset
+        </button>
+        <button type="submit" id="submitBtn" class="w-full sm:w-auto px-8 py-3 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-sky-500/20 transition flex items-center justify-center gap-2">
+          <span>Kirim Jawaban Akhir</span>
+        </button>
+      </div>
+    </form>
+
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. KONFIGURASI WEB APP URL GOOGLE APPS SCRIPT
+    // ==========================================
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuk-AoswuIrlbNPeqNUjZA1AqC5PeitqnpA4zTbA_JkOe6Y_HE5KR-BTyvsQIg6FTWAQ/exec";
+    const STORAGE_KEY = "exam_essay_session_v4";
+
+    // ==========================================
+    // 2. DAFTAR 15 SOAL ESAI
+    // ==========================================
+    const examQuestions = [
+      // Bagian 1: Angka Biner (Tingkat kesulitan naik)
+      {
+        id: "q1",
+        category: "Bagian 1: Angka Biner",
+        title: "Soal 1: Konversi Biner Sederhana (Tingkat 1)",
+        prompt: "Ubahlah angka biasa 19 ke dalam bentuk biner 5-bit (gunakan urutan nilai tempat: 16, 8, 4, 2, 1).\nTuliskan bentuk binernya serta tunjukkan penjumlahan angka bawah yang digunakan untuk memperoleh angka 19!",
+        placeholder: "Tuliskan hasil biner (contoh: 10011) dan cara penjumlahannya..."
+      },
+      {
+        id: "q2",
+        category: "Bagian 1: Angka Biner",
+        title: "Soal 2: Konversi Biner Menengah (Tingkat 2)",
+        prompt: "Ubahlah angka biasa 26 ke dalam bentuk biner 5-bit (16, 8, 4, 2, 1).\nTuliskan bentuk binernya dan jelaskan kombinasi angka bawah yang diaktifkan menjadi angka 1!",
+        placeholder: "Tuliskan hasil biner dan langkah perhitungannya..."
+      },
+      {
+        id: "q3",
+        category: "Bagian 1: Angka Biner",
+        title: "Soal 3: Konversi Biner Lanjutan (Tingkat 3)",
+        prompt: "Ubahlah angka biasa 47 ke dalam bentuk biner 6-bit (32, 16, 8, 4, 2, 1).\nTuliskan deret binernya secara lengkap beserta pembuktian penjumlahannya!",
+        placeholder: "Tuliskan hasil biner dan pembuktiannya..."
+      },
+      {
+        id: "q4",
+        category: "Bagian 1: Angka Biner",
+        title: "Soal 4: Konversi Biner 7-Bit (Tingkat 4)",
+        prompt: "Ubahlah angka biasa 117 ke dalam bentuk biner 7-bit (nilai tempat: 64, 32, 16, 8, 4, 2, 1).\nTuliskan bentuk biner 7-bit tersebut dan uraikan angka-angka bawah mana saja yang dijumlahkan untuk menghasilkan 117!",
+        placeholder: "Tuliskan hasil biner 7-bit dan rincian penjumlahannya..."
+      },
+
+      // Bagian 2: Pola Angka (Tanpa clue jenis pola pada judul)
+      {
+        id: "q5",
+        category: "Bagian 2: Pola Angka",
+        title: "Soal 5: Analisis Pola Angka",
+        prompt: "Perhatikan barisan angka berikut:\n68, 61, 54, 47, ...\n\nTentukan satu angka berikutnya dan jelaskan operasi serta selisih angka yang digunakan pada pola tersebut!",
+        placeholder: "Angka berikutnya adalah: ...\nPenjelasan pola: ..."
+      },
+      {
+        id: "q6",
+        category: "Bagian 2: Pola Angka",
+        title: "Soal 6: Analisis Pola Angka",
+        prompt: "Perhatikan barisan angka berikut:\n486, 162, 54, 18, ...\n\nTentukan angka selanjutnya dan jelaskan aturan hitung yang berlaku pada barisan angka ini!",
+        placeholder: "Angka selanjutnya adalah: ...\nAturan pola: ..."
+      },
+      {
+        id: "q7",
+        category: "Bagian 2: Pola Angka",
+        title: "Soal 7: Analisis Pola Angka",
+        prompt: "Perhatikan barisan angka berikut:\n4, 7, 14, 17, 34, ...\n\nTentukan angka berikutnya dan jelaskan secara detail aturan perhitungannya dari satu suku ke suku berikutnya!",
+        placeholder: "Angka berikutnya: ...\nPenjelasan langkah perhitungannya: ..."
+      },
+      {
+        id: "q8",
+        category: "Bagian 2: Pola Angka",
+        title: "Soal 8: Analisis Pola Angka",
+        prompt: "Perhatikan barisan angka berikut:\n8, 4, 12, 8, 24, ...\n\nTentukan angka berikutnya dan tuliskan pola operasi hitung yang terjadi dari angka ke angka!",
+        placeholder: "Angka berikutnya: ...\nPenjelasan aturan pola: ..."
+      },
+      {
+        id: "q9",
+        category: "Bagian 2: Pola Angka",
+        title: "Soal 9: Analisis Pola Angka",
+        prompt: "Perhatikan barisan angka berikut:\n3, 7, 12, 18, 25, ...\n\nTentukan angka selanjutnya dan jelaskan perubahan selisih antar angka pada barisan tersebut!",
+        placeholder: "Angka selanjutnya: ...\nPenjelasan pola perubahannya: ..."
+      },
+
+      // Bagian 3: Pola Grid / Tabel
+      {
+        id: "q10",
+        category: "Bagian 3: Pola Grid",
+        title: "Soal 10: Pola Grid 5x5 - Bingkai Batas Luar",
+        prompt: "Ketentuan Pola: Seluruh sel yang berada di tepi/bingkai luar tabel (Baris 1, Baris 5, Kolom 1, dan Kolom 5) WAJIB bernilai 1. Sedangkan seluruh sel di bagian dalam bingkai (inti kotak 3x3) WAJIB bernilai 0.\n\nPerhatikan tabel grid 5x5 di bawah ini:",
+        gridTable: [
+          ["Kol 1", "Kol 2", "Kol 3", "Kol 4", "Kol 5"],
+          ["1", "1", "1", "1", "1"],
+          ["1", "0", "0", "0", "1"],
+          ["1", "0", "1", "0", "1"],
+          ["1", "0", "0", "0", "1"],
+          ["1", "1", "1", "1", "1"]
+        ],
+        subPrompt: "Pertanyaan: Terdapat 1 angka yang menyalahi pola bingkai batas tersebut! Sebutkan posisi Baris dan Kolom dari angka yang salah, jelaskan alasannya, dan tuliskan angka perbaikannya!",
+        placeholder: "Posisi yang salah: Baris ..., Kolom ...\nAlasan: ...\nAngka perbaikan: ..."
+      },
+      {
+        id: "q11",
+        category: "Bagian 3: Pola Grid",
+        title: "Soal 11: Pola Grid 5x5 - Garis Silang 'X'",
+        prompt: "Ketentuan Pola: Angka 1 HANYA boleh muncul tepat pada kedua garis diagonal menyilang (diagonal dari kiri atas ke kanan bawah DAN diagonal dari kanan atas ke kiri bawah) sehingga membentuk silang 'X'. Semua sel lainnya di luar garis silang harus bernilai 0.\n\nPerhatikan tabel grid 5x5 di bawah ini:",
+        gridTable: [
+          ["Kol 1", "Kol 2", "Kol 3", "Kol 4", "Kol 5"],
+          ["1", "0", "0", "0", "1"],
+          ["0", "1", "0", "1", "0"],
+          ["0", "0", "1", "0", "0"],
+          ["0", "1", "0", "1", "1"],
+          ["1", "0", "0", "0", "1"]
+        ],
+        subPrompt: "Pertanyaan: Temukan letak angka 1 yang keliru (tidak berada di jalur garis silang 'X')! Sebutkan koordinat Baris dan Kolomnya serta apa perbaikan yang seharusnya.",
+        placeholder: "Posisi angka salah: Baris ..., Kolom ...\nAlasan letak salah: ...\nSeharusnya diubah menjadi: ..."
+      },
+      {
+        id: "q12",
+        category: "Bagian 3: Pola Grid",
+        title: "Soal 12: Pola Grid 6x6 - Simetri Cermin Atas-Bawah",
+        prompt: "Ketentuan Pola (Cermin Horizontal): Tiga baris bawah (Baris 4, 5, 6) harus merupakan refleksi cermin persis dari tiga baris atas (Baris 1, 2, 3). Artinya:\n- Baris 4 mencerminkan Baris 3\n- Baris 5 mencerminkan Baris 2\n- Baris 6 mencerminkan Baris 1\n\nPerhatikan tabel grid 6x6 di bawah ini:",
+        gridTable: [
+          ["Kol 1", "Kol 2", "Kol 3", "Kol 4", "Kol 5", "Kol 6"],
+          ["1", "0", "1", "1", "0", "1"],
+          ["0", "1", "0", "0", "1", "0"],
+          ["1", "1", "0", "0", "1", "1"],
+          ["1", "1", "0", "0", "1", "1"],
+          ["0", "1", "0", "1", "1", "0"],
+          ["1", "0", "1", "1", "0", "1"]
+        ],
+        subPrompt: "Pertanyaan: Pada salah satu baris cermin bawah terdapat 1 angka yang tidak cocok dengan pantulan baris pasangannya. Sebutkan posisi Baris dan Kolomnya, tunjukkan pasangannya di baris atas, dan tuliskan angka koreksinya!",
+        placeholder: "Posisi yang tidak sinkron: Baris ..., Kolom ...\nPasangan di baris atas: Baris ..., Kolom ...\nKoreksi angka: ..."
+      },
+      {
+        id: "q13",
+        category: "Bagian 3: Pola Grid",
+        title: "Soal 13: Pola Grid 6x6 - Papan Catur Selang-Seling",
+        prompt: "Ketentuan Pola: Setiap angka harus berselang-seling secara ketat seperti papan catur (1 lalu 0 lalu 1 dst.), baik secara horizontal maupun vertikal. Tidak boleh ada dua angka yang sama saling berdampingan langsung ke samping ataupun atas-bawah.\n\nPerhatikan tabel matriks 6x6 berikut:",
+        gridTable: [
+          ["Kol 1", "Kol 2", "Kol 3", "Kol 4", "Kol 5", "Kol 6"],
+          ["1", "0", "1", "0", "1", "0"],
+          ["0", "1", "0", "1", "0", "1"],
+          ["1", "0", "1", "0", "1", "0"],
+          ["0", "1", "0", "0", "0", "1"],
+          ["1", "0", "1", "0", "1", "0"],
+          ["0", "1", "0", "1", "0", "1"]
+        ],
+        subPrompt: "Pertanyaan: Pada Baris 4, urutan selang-seling terputus oleh sebuah angka yang salah. Tentukan nomor Kolom pada Baris 4 yang salah tersebut, jelaskan mengapa itu merusak aturan selang-seling, dan sebutkan angka penggantinya!",
+        placeholder: "Posisi salah: Baris 4, Kolom ...\nPenjelasan rusaknya pola: ...\nAngka pengganti yang benar: ..."
+      },
+
+      // Bagian 4: Caesar Cipher (Kriptografi Sandi)
+      {
+        id: "q14",
+        category: "Bagian 4: Caesar Cipher",
+        title: "Soal 14: Caesar Cipher (Lompatan 2 Huruf ke Kiri)",
+        prompt: "Susunan abjad acuan:\nA B C D E F G H I J K L M N O P Q R S T U V W X Y Z\n\nDiketahui sebuah teks sandi: 'DWMW'\nBerdasarkan aturan Caesar Cipher dengan sistem melompat 2 kali ke kiri pada abjad:\nJelaskan proses perubahan tiap hurufnya dan tuliskan kata rahasia yang berhasil diungkap!",
+        placeholder: "Langkah lompatan tiap huruf:\nD -> ...\nW -> ...\nM -> ...\nW -> ...\nKata rahasia yang terungkap: ..."
+      },
+      {
+        id: "q15",
+        category: "Bagian 4: Caesar Cipher",
+        title: "Soal 15: Caesar Cipher (Lompatan 3 Huruf ke Kiri)",
+        prompt: "Susunan abjad acuan:\nA B C D E F G H I J K L M N O P Q R S T U V W X Y Z\n\nDiketahui sebuah teks sandi: 'NRGL'\nBerdasarkan aturan Caesar Cipher dengan sistem melompat 3 kali ke kiri pada abjad (contoh: D melompat 3 ke kiri menjadi A):\nJelaskan proses perubahan tiap huruf dari sandi 'NRGL' dan tentukan kata asli hasil pembongkarannya!",
+        placeholder: "Langkah lompatan tiap huruf:\nN -> ...\nR -> ...\nG -> ...\nL -> ...\nKata rahasia yang dihasilkan: ..."
+      }
+    ];
+
+    // ==========================================
+    // 3. RENDER SEMUA SOAL KE HALAMAN
+    // ==========================================
+    const container = document.getElementById("questions-list");
+
+    examQuestions.forEach((q) => {
+      const card = document.createElement("div");
+      card.className = "bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-md transition hover:border-slate-700 space-y-4";
+
+      // Render Grid Table jika ada
+      let tableHtml = "";
+      if (q.gridTable) {
+        const headerRow = q.gridTable[0];
+        const bodyRows = q.gridTable.slice(1);
+
+        tableHtml = `
+          <div class="my-4 overflow-x-auto">
+            <table class="w-full max-w-lg mx-auto border-collapse border border-slate-700 text-center text-sm font-mono bg-slate-950 rounded-xl overflow-hidden shadow-inner">
+              <thead>
+                <tr class="bg-slate-800/90 text-sky-300">
+                  <th class="border border-slate-700 py-2.5 px-3 text-xs">#</th>
+                  ${headerRow.map(h => `<th class="border border-slate-700 py-2.5 px-3 text-xs tracking-wider">${h}</th>`).join("")}
+                </tr>
+              </thead>
+              <tbody>
+                ${bodyRows.map((row, rIdx) => `
+                  <tr class="hover:bg-slate-900/60 transition-colors">
+                    <td class="border border-slate-800 py-2 px-3 text-xs font-semibold text-slate-400 bg-slate-900/50">Baris ${rIdx + 1}</td>${row.map(cell => `<td class="border border-slate-800 py-2 px-3 text-base text-slate-200 font-bold">${cell}</td>`).join("")}
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-sky-400 uppercase tracking-wider bg-sky-950/60 border border-sky-800/40 px-2.5 py-0.5 rounded-full">${q.category}</span>
+          <span class="text-xs text-slate-500 font-mono">ID: ${q.id.toUpperCase()}</span>
+        </div>
+        <h3 class="text-lg font-bold text-slate-100">${q.title}</h3>
+        <p class="text-sm text-slate-300 leading-relaxed whitespace-pre-line">${q.prompt}</p>
+        ${tableHtml}
+        ${q.subPrompt ? `<p class="text-sm font-medium text-amber-300/90 bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl">${q.subPrompt}</p>` : ""}
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Jawaban & Penjelasan Anda *</label>
+          <textarea 
+            name="${q.id}" 
+            rows="5" 
+            placeholder="${q.placeholder || 'Tuliskan jawaban Anda di sini...'}" 
+            class="code-font w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent text-sm leading-relaxed"
+          ></textarea>
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+
+    // ==========================================
+    // 4. SISTEM AUTO-SAVE & ANTI-LOST PROGRESS (localStorage)
+    // ==========================================
+    const fullNameInput = document.getElementById("fullName");
+    const classNameInput = document.getElementById("className");
+    const saveIndicator = document.getElementById("save-status");
+
+    function saveState() {
+      const state = {
+        fullName: fullNameInput.value.trim(),
+        className: classNameInput.value.trim(),
+        answers: {}
+      };
+
+      examQuestions.forEach((q) => {
+        const textarea = document.querySelector(`textarea[name="${q.id}"]`);
+        state.answers[q.id] = textarea ? textarea.value : "";
+      });
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      saveIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Tersimpan otomatis';
+      saveIndicator.className = "inline-flex items-center gap-2 self-start sm:self-auto px-3.5 py-1.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+
+      try {
+        const state = JSON.parse(raw);
+        if (state.fullName) fullNameInput.value = state.fullName;
+        if (state.className) classNameInput.value = state.className;
+
+        if (state.answers) {
+          Object.entries(state.answers).forEach(([key, val]) => {
+            const textarea = document.querySelector(`textarea[name="${key}"]`);
+            if (textarea && val) textarea.value = val;
+          });
+        }
+      } catch (err) {
+        console.error("Gagal memulihkan sesi sebelumnya", err);
+      }
+    }
+
+    document.addEventListener("input", () => {
+      saveIndicator.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Menyimpan...';
+      saveIndicator.className = "inline-flex items-center gap-2 self-start sm:self-auto px-3.5 py-1.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20";
+      saveState();
+    });
+
+    window.addEventListener("DOMContentLoaded", loadState);
+
+    // ==========================================
+    // 5. PENGIRIMAN DATA KE GOOGLE APPS SCRIPT
+    // ==========================================
+    const form = document.getElementById("examForm");
+    const submitBtn = document.getElementById("submitBtn");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const fullName = fullNameInput.value.trim();
+      const className = classNameInput.value.trim();
+
+      if (!fullName || !className) {
+        alert("Harap isi Nama Lengkap dan Kelas terlebih dahulu sebelum mengumpulkan ujian.");
+        fullNameInput.focus();
+        return;
+      }
+
+      let emptyCount = 0;
+      examQuestions.forEach((q) => {
+        const txt = document.querySelector(`textarea[name="${q.id}"]`);
+        if (!txt || !txt.value.trim()) emptyCount++;
+      });
+
+      let confirmMsg = "Apakah Anda yakin ingin mengumpulkan seluruh lembar jawaban?";
+      if (emptyCount > 0) {
+        confirmMsg = `Masih ada ${emptyCount} soal yang belum dijawab. Yakin tetap ingin mengirimkan ujian?`;
+      }
+
+      if (!confirm(confirmMsg)) return;
+
+      const answers = {};
+      examQuestions.forEach((q) => {
+        const txt = document.querySelector(`textarea[name="${q.id}"]`);
+        answers[q.id] = txt ? txt.value.trim() : "";
+      });
+
+      const payload = { fullName, className, answers };
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+        Mengirimkan Jawaban...
+      `;
+
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (data.status === "success") {
+          localStorage.removeItem(STORAGE_KEY);
+          document.body.innerHTML = `
+            <div class="min-h-screen flex items-center justify-center p-6 bg-slate-950">
+              <div class="max-w-md w-full bg-slate-900 border border-emerald-500/30 rounded-2xl p-8 text-center shadow-2xl">
+                <div class="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-400 text-3xl font-bold">✓</div>
+                <h2 class="text-xl font-bold text-white mb-2">Jawaban Berhasil Terkirim!</h2>
+                <p class="text-sm text-slate-400 mb-6 leading-relaxed">Seluruh jawaban esai Anda telah tercatat rapi ke dalam lembar kerja Google Sheets guru.</p>
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs text-slate-400 text-left space-y-1.5">
+                  <p><span class="text-slate-500">Nama:</span> <span class="text-slate-200 font-semibold">${fullName}</span></p>
+                  <p><span class="text-slate-500">Kelas:</span> <span class="text-slate-200 font-semibold">${className}</span></p>
+                  <p><span class="text-slate-500">Status:</span> <span class="text-emerald-400 font-semibold">Tersimpan di Spreadsheet</span></p>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          throw new Error(data.message || "Pengiriman gagal di server.");
+        }
+      } catch (err) {
+        console.error("Gagal mengirim data:", err);
+        alert("Pengiriman gagal terhubung ke server. Pastikan koneksi internet aktif. Jawaban Anda tetap tersimpan aman di browser!");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "<span>Kirim Jawaban Akhir</span>";
+      }
+    });
+
+    // Tombol Reset Data
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      if (confirm("Tindakan ini akan mengosongkan semua tulisan dan jawaban Anda pada perangkat ini. Mulai ulang?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
+    });
+  </script>
+</body>
+</html>
